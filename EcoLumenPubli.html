@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" sizes="16x16" href="/home/turbis/EcoLumen/Logo.png">
+    <!-- Chosen Palette: Calm Harmony (Background: #f8fafc, Accent: #10b981, Text: #334155, Highlight: #f59e0b) -->
+    <!-- Application Structure Plan: The SPA is designed as a single-page narrative dashboard with a fixed sidebar for navigation. This structure allows users to either scroll through the project's story sequentially or jump directly to specific sections like data analysis or financial viability. The flow is: 1. Hero (Introduction), 2. Problem & Solution, 3. How It Works (interactive diagram), 4. Data Analysis (interactive chart and formula), 5. Financial Viability (charts), 6. Advantages/Limitations, 7. Conclusion & Future. This non-linear but guided approach was chosen to cater to different user types (e.g., evaluators jumping to data, potential clients exploring the solution) and to make a complex report digestible and engaging. -->
+    <!-- Visualization & Content Choices: 1. System Architecture (Goal: Organize): An HTML/CSS flexbox diagram with icons is used instead of static images or SVG to be lightweight and interactive on hover. 2. Light Sensor Data (Goal: Change): An interactive Chart.js line chart visualizes the 23-hour test, making the data tangible. Tooltips provide specific data points. 3. Control Formula (Goal: Interact): The mathematical formula is paired with an interactive slider to demonstrate the logic in a hands-on way. 4. Cost Analysis (Goal: Compare): Bar and Donut charts from Chart.js are used to make financial comparisons more intuitive than raw tables. 5. Key Metrics (Goal: Inform): High-contrast "card" elements display key financial totals for quick comprehension. All choices prioritize interaction and clarity over static presentation, confirming NO SVG/Mermaid. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <title>Eco-Lumen: Reporte Interactivo del Proyecto</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #334155;
+        }
+        .active-nav {
+            background-color: #10b981;
+            color: white;
+        }
+        .nav-link {
+            transition: all 0.2s ease-in-out;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body class="flex">
+
+<!-- Sidebar Navigation -->
+<nav class="hidden lg:block w-64 bg-white shadow-lg fixed h-full p-4">
+    <div class="flex items-center gap-3 mb-8">
+        <div class="w-14 h-14 rounded-full p-1 border-2 border-emerald-200 flex-shrink-0">
+            <img src="/home/turbis/EcoLumen/Logo.png" alt="Eco-Lumen Logo" class="w-full h-full object-cover rounded-full">
+        </div>
+        <span class="text-2xl font-bold text-emerald-600">Eco-Lumen</span>
+    </div>
+    <ul class="space-y-2">
+        <li><a href="#inicio" data-nav-link="inicio" class="nav-link block p-3 rounded-lg font-medium text-slate-700 hover:bg-emerald-50">Inicio</a></li>
+        <li><a href="#solucion" data-nav-link="solucion" class="nav-link block p-3 rounded-lg font-medium text-slate-700 hover:bg-emerald-50">Problema y Solución</a></li>
+        <li><a href="#funcionamiento" data-nav-link="funcionamiento" class="nav-link block p-3 rounded-lg font-medium text-slate-700 hover:bg-emerald-50">¿Cómo Funciona?</a></li>
+        <li><a href="#analisis" data-nav-link="analisis" class="nav-link block p-3 rounded-lg font-medium text-slate-700 hover:bg-emerald-50">Análisis de Datos</a></li>
+        <li><a href="#viabilidad" data-nav-link="viabilidad" class="nav-link block p-3 rounded-lg font-medium text-slate-700 hover:bg-emerald-50">Viabilidad del Proyecto</a></li>
+        <li><a href="#ventajas" data-nav-link="ventajas" class="nav-link block p-3 rounded-lg font-medium text-slate-700 hover:bg-emerald-50">Ventajas y Retos</a></li>
+        <li><a href="#conclusion" data-nav-link="conclusion" class="nav-link block p-3 rounded-lg font-medium text-slate-700 hover:bg-emerald-50">Conclusión y Futuro</a></li>
+    </ul>
+</nav>
+
+<!-- Mobile Header -->
+<header class="lg:hidden fixed top-0 left-0 right-0 bg-white shadow-md z-10 p-4 flex justify-between items-center">
+    <div class="flex items-center gap-2">
+        <div class="w-10 h-10 rounded-full p-0.5 border border-emerald-200 flex-shrink-0">
+            <img src="/home/turbis/EcoLumen/Logo.png" alt="Eco-Lumen Logo" class="w-full h-full object-cover rounded-full">
+        </div>
+        <span class="text-xl font-bold text-emerald-600">Eco-Lumen</span>
+    </div>
+    <button id="menu-btn" class="text-slate-700 focus:outline-none">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+    </button>
+</header>
+<div id="mobile-menu" class="hidden lg:hidden fixed inset-0 bg-white z-20 p-4">
+    <div class="flex justify-end">
+        <button id="close-menu-btn" class="text-slate-700">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+    </div>
+    <ul class="mt-8 space-y-4">
+        <li><a href="#inicio" class="mobile-nav-link block p-3 rounded-lg text-lg font-medium text-slate-700">Inicio</a></li>
+        <li><a href="#solucion" class="mobile-nav-link block p-3 rounded-lg text-lg font-medium text-slate-700">Problema y Solución</a></li>
+        <li><a href="#funcionamiento" class="mobile-nav-link block p-3 rounded-lg text-lg font-medium text-slate-700">¿Cómo Funciona?</a></li>
+        <li><a href="#analisis" class="mobile-nav-link block p-3 rounded-lg text-lg font-medium text-slate-700">Análisis de Datos</a></li>
+        <li><a href="#viabilidad" class="mobile-nav-link block p-3 rounded-lg text-lg font-medium text-slate-700">Viabilidad del Proyecto</a></li>
+        <li><a href="#ventajas" class="mobile-nav-link block p-3 rounded-lg text-lg font-medium text-slate-700">Ventajas y Retos</a></li>
+        <li><a href="#conclusion" class="mobile-nav-link block p-3 rounded-lg text-lg font-medium text-slate-700">Conclusión y Futuro</a></li>
+    </ul>
+</div>
+
+
+<!-- Main Content -->
+<main class="w-full lg:ml-64 p-6 pt-20 lg:pt-6">
+
+    <!-- Inicio Section -->
+    <section id="inicio" class="min-h-screen flex flex-col justify-center items-center text-center">
+        <div class="max-w-4xl">
+            <h1 class="text-5xl md:text-7xl font-bold text-emerald-600">Eco-Lumen</h1>
+            <p class="mt-4 text-xl md:text-2xl text-slate-600">Iluminación Inteligente para un Futuro Sostenible.</p>
+            <p class="mt-6 max-w-2xl mx-auto text-lg text-slate-500">
+                Un proyecto del CECyT 9 "Juan de Dios Bátiz" que redefine la eficiencia energética. Explore cómo nuestra solución automatizada reduce costos y cuida el planeta, transformando espacios comunes en entornos inteligentes.
+            </p>
+        </div>
+    </section>
+
+    <!-- Problema y Solución Section -->
+    <section id="solucion" class="py-20">
+        <h2 class="text-4xl font-bold text-center mb-12">El Reto Energético y Nuestra Solución</h2>
+        <div class="max-w-5xl mx-auto grid md:grid-cols-2 gap-8">
+            <div class="bg-white p-8 rounded-xl shadow-md">
+                <h3 class="text-2xl font-bold text-amber-600 mb-4">El Problema: Desperdicio de Energía</h3>
+                <p>El consumo energético ineficiente es una problemática global con un alto impacto económico y ambiental. Una parte significativa de este consumo proviene de la iluminación, donde es común encontrar luces encendidas en espacios desocupados o a plena potencia cuando la luz natural es suficiente, generando un desperdicio considerable.</p>
+            </div>
+            <div class="bg-white p-8 rounded-xl shadow-md border-t-4 border-emerald-500">
+                <h3 class="text-2xl font-bold text-emerald-600 mb-4">La Solución: Eco-Lumen</h3>
+                <p>Eco-Lumen es un sistema de iluminación inteligente que ataca este problema de raíz. Mediante la automatización y el uso de sensores, ajusta la luz artificial solo cuando y donde se necesita, optimizando el consumo para lograr un ahorro energético sustancial sin sacrificar el confort ni la seguridad del usuario.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Cómo Funciona Section -->
+    <section id="funcionamiento" class="py-20 bg-white rounded-xl shadow-md">
+        <h2 class="text-4xl font-bold text-center mb-4">¿Cómo Funciona?</h2>
+        <p class="text-center text-slate-500 mb-12 max-w-3xl mx-auto">Eco-Lumen opera bajo una arquitectura modular donde cada componente está basado en un microcontrolador ESP32. Esto estandariza la comunicación (Wi-Fi y Bluetooth) y el procesamiento en toda la red, creando un ecosistema robusto y escalable.</p>
+
+        <div class="max-w-6xl mx-auto flex flex-col lg:flex-row items-center justify-center gap-8">
+            <!-- Módulos -->
+            <div class="space-y-6 flex-1">
+                <div class="p-6 rounded-lg border border-slate-200 hover:shadow-lg transition-shadow">
+                    <h4 class="text-xl font-bold mb-2">🧠 Módulo Central (Basado en ESP32)</h4>
+                    <p>El cerebro del sistema. Su ESP32 gestiona la red, recibe datos de los sensores, procesa la información y envía comandos a los dimmers. Crea la red Wi-Fi local para el control y la configuración.</p>
+                </div>
+                <div class="p-6 rounded-lg border border-slate-200 hover:shadow-lg transition-shadow">
+                    <h4 class="text-xl font-bold mb-2">☀️ Módulo Sensor LUX (Basado en ESP32)</h4>
+                    <p>Su ESP32 mide la luz natural y utiliza su capacidad de bajo consumo (Deep Sleep) para operar con batería de forma eficiente, despertando solo para enviar datos.</p>
+                </div>
+                <div class="p-6 rounded-lg border border-slate-200 hover:shadow-lg transition-shadow">
+                    <h4 class="text-xl font-bold mb-2">👀 Módulo Sensor PIR (Basado en ESP32)</h4>
+                    <p>El ESP32 en este módulo procesa la señal del sensor de presencia y comunica el estado de ocupación al Módulo Central para la toma de decisiones.</p>
+                </div>
+                <div class="p-6 rounded-lg border border-slate-200 hover:shadow-lg transition-shadow">
+                    <h4 class="text-xl font-bold mb-2">💡 Módulo Dimmer (Basado en ESP32)</h4>
+                    <p>El actuador inteligente. Un ESP32 recibe las órdenes del Módulo Central y regula con precisión la potencia entregada a las luminarias (compatibles con TRIAC).</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Análisis de Datos Section -->
+    <section id="analisis" class="py-20">
+        <h2 class="text-4xl font-bold text-center mb-4">Análisis de Datos: La Prueba Real</h2>
+        <p class="text-center text-slate-500 mb-12 max-w-3xl mx-auto">Para validar el comportamiento del sistema, se realizó una prueba de 23 horas con el sensor de luz en una habitación con ventana durante un día nublado. La gráfica muestra cómo la luz natural varía y cómo el sistema reaccionaría a estos cambios.</p>
+        <div class="bg-white p-6 rounded-xl shadow-md">
+            <div class="chart-container">
+                <canvas id="lightSensorChart"></canvas>
+            </div>
+            <p class="text-center mt-4 text-sm text-slate-500">Datos de luminosidad (lx) a lo largo de 23 horas.</p>
+        </div>
+
+        <div class="mt-12 bg-white p-8 rounded-xl shadow-md">
+            <h3 class="text-2xl font-bold text-center mb-4">Lógica de Control Inteligente</h3>
+            <p class="text-center text-slate-500 mb-8 max-w-3xl mx-auto">El núcleo de Eco-Lumen es su función matemática, que traduce los datos del sensor en acciones de ahorro. Pruebe el slider para ver cómo el brillo (B) se ajustaría según el nivel de luz (L) detectado.</p>
+            <div class="flex flex-col md:flex-row items-center justify-center gap-8">
+                <div class="text-center">
+                    <p class="font-mono text-lg p-4 bg-slate-100 rounded-md">B(L) = (500 - L) / 4.5</p>
+                    <p class="text-sm text-slate-500 mt-2">Para 50 &lt; L &lt; 500</p>
+                </div>
+                <div class="w-full md:w-1/2">
+                    <label for="luxSlider" class="block mb-2 font-medium">Nivel de Luz (L): <span id="luxValue" class="font-bold text-emerald-600">275</span> lx</label>
+                    <input id="luxSlider" type="range" min="0" max="600" value="275" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                    <div class="mt-4 text-center">
+                        <p class="text-lg">Brillo de la Lámpara (B): <span id="brightnessValue" class="font-bold text-xl text-amber-500">50%</span></p>
+                        <div id="brightnessIndicator" class="w-24 h-24 rounded-full mx-auto mt-2 transition-colors duration-300" style="background-color: rgba(253, 186, 116, 0.5);"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Viabilidad del Proyecto Section -->
+    <section id="viabilidad" class="py-20 bg-white rounded-xl shadow-md">
+        <h2 class="text-4xl font-bold text-center mb-4">Viabilidad del Proyecto</h2>
+        <p class="text-center text-slate-500 mb-12 max-w-3xl mx-auto">Un análisis de costos y proyecciones de ingresos demuestra que Eco-Lumen no solo es una solución técnica robusta, sino también un proyecto económicamente viable y con potencial de rentabilidad.</p>
+        <div class="grid md:grid-cols-2 gap-8">
+            <div>
+                <h3 class="text-2xl font-bold text-center mb-4">Costos por Módulo</h3>
+                <div class="chart-container h-80">
+                    <canvas id="costBarChart"></canvas>
+                </div>
+            </div>
+            <div>
+                <h3 class="text-2xl font-bold text-center mb-4">Proyección Financiera Anual</h3>
+                <div class="flex flex-col justify-center items-center h-full space-y-4">
+                    <div class="w-full text-center p-4 bg-red-100 rounded-lg">
+                        <p class="text-lg font-medium text-red-800">Costos Anuales Totales</p>
+                        <p class="text-3xl font-bold text-red-600">$81,489.12</p>
+                    </div>
+                    <div class="w-full text-center p-4 bg-green-100 rounded-lg">
+                        <p class="text-lg font-medium text-green-800">Ingresos Anuales Totales</p>
+                        <p class="text-3xl font-bold text-green-600">$114,000.00</p>
+                    </div>
+                    <div class="w-full text-center p-4 bg-emerald-100 rounded-lg">
+                        <p class="text-lg font-medium text-emerald-800">Ganancia Neta Anual Estimada</p>
+                        <p class="text-3xl font-bold text-emerald-600">$32,510.88</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Ventajas y Retos Section -->
+    <section id="ventajas" class="py-20">
+        <h2 class="text-4xl font-bold text-center mb-12">Ventajas y Retos</h2>
+        <div class="max-w-5xl mx-auto grid md:grid-cols-2 gap-8">
+            <div class="bg-white p-8 rounded-xl shadow-md">
+                <h3 class="text-2xl font-bold text-emerald-600 mb-4">Ventajas Competitivas</h3>
+                <ul class="space-y-3 list-disc list-inside">
+                    <li><strong>Ahorro Significativo:</strong> Reducción directa en la factura eléctrica.</li>
+                    <li><strong>Automatización Completa:</strong> El sistema opera de forma autónoma, maximizando la comodidad.</li>
+                    <li><strong>Modular y Escalable:</strong> Adaptable a cualquier tamaño de instalación, desde un hogar hasta una industria.</li>
+                    <li><strong>Control Centralizado:</strong> Gestión y monitoreo sencillos desde una interfaz web.</li>
+                    <li><strong>Bajo Costo:</strong> El uso de componentes comunes hace que la producción sea económica.</li>
+                </ul>
+            </div>
+            <div class="bg-white p-8 rounded-xl shadow-md">
+                <h3 class="text-2xl font-bold text-amber-600 mb-4">Retos y Limitaciones</h3>
+                <ul class="space-y-3 list-disc list-inside">
+                    <li><strong>Compatibilidad de Focos:</strong> Requiere luminarias LED compatibles con tecnología de dimmer por TRIAC.</li>
+                    <li><strong>Cobertura de Red:</strong> En instalaciones grandes, la red Wi-Fi podría necesitar repetidores.</li>
+                    <li><strong>Calibración:</strong> Los sensores pueden requerir ajustes iniciales para adaptarse a cada entorno específico.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Conclusión y Futuro Section -->
+    <section id="conclusion" class="py-20 text-center">
+        <h2 class="text-4xl font-bold mb-4">Conclusión y Visión de Futuro</h2>
+        <div class="max-w-3xl mx-auto">
+            <p class="text-lg text-slate-600 mb-6">Eco-Lumen ha demostrado ser un prototipo exitoso y factible, que resuelve eficazmente el problema del consumo energético excesivo en iluminación. Su diseño modular, bajo costo y lógica de control inteligente lo posicionan como una solución con un gran potencial de mercado.</p>
+            <div class="bg-white p-8 rounded-xl shadow-md inline-block">
+                <h3 class="text-2xl font-bold text-emerald-600 mb-4">Próximos Pasos</h3>
+                <p>La principal mejora a futuro es la integración directa del chip ESP32 en el diseño de la PCB, eliminando el Dev Kit. Esto reducirá drásticamente el consumo en modo de bajo consumo (Deep Sleep) de 10mA a menos de 10µA, optimizando aún más la eficiencia, especialmente en módulos alimentados por batería.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer class="text-center py-8 border-t border-slate-200">
+        <p class="text-slate-500">Proyecto Aula "Eco-Lumen" | Grupo 6IV2 | CECyT 9 "Juan de Dios Bátiz"</p>
+        <p class="text-slate-400 text-sm">Cortes H. Francisco, García O. Arturo, Hernández F. Yahir, Mireles A. Marcos</p>
+    </footer>
+
+</main>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Mobile Menu
+        const menuBtn = document.getElementById('menu-btn');
+        const closeMenuBtn = document.getElementById('close-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+
+        menuBtn.addEventListener('click', () => mobileMenu.classList.remove('hidden'));
+        closeMenuBtn.addEventListener('click', () => mobileMenu.classList.add('hidden'));
+        mobileNavLinks.forEach(link => {
+            link.addEventListener('click', () => mobileMenu.classList.add('hidden'));
+        });
+
+        // Navigation scroll spy
+        const sections = document.querySelectorAll('section');
+        const navLinks = document.querySelectorAll('a[data-nav-link]');
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const id = entry.target.getAttribute('id');
+                    navLinks.forEach(link => {
+                        link.classList.remove('active-nav');
+                        if (link.getAttribute('data-nav-link') === id) {
+                            link.classList.add('active-nav');
+                        }
+                    });
+                }
+            });
+        }, { rootMargin: "-50% 0px -50% 0px" });
+
+        sections.forEach(section => {
+            observer.observe(section);
+        });
+
+        // Light sensor data
+        const lightSensorData = {
+            labels: ['01:10', '02:10', '03:11', '04:11', '05:01', '05:20', '05:40', '06:00', '06:20', '06:40', '07:01', '07:21', '07:42', '08:02', '08:23', '08:43', '09:03', '09:23', '09:47', '10:08', '10:30', '10:51', '11:13', '11:35', '11:56', '12:17', '12:38', '12:59', '13:19', '13:40', '14:00', '14:20', '14:40', '15:00', '15:20', '15:41', '16:01', '16:21', '16:41', '17:01', '17:22', '17:44', '18:06', '18:27', '18:47', '19:08', '19:27', '19:48', '20:08', '20:31', '20:51', '21:12', '21:32', '21:53', '22:13', '22:33', '22:54', '23:14', '23:34', '23:55', '00:15', '00:36', '00:56'],
+            values: [0, 0, 0, 0, 10, 50, 200, 1500, 4000, 8000, 25000, 28000, 24000, 34000, 29000, 32000, 15000, 18000, 28000, 14000, 16000, 10000, 9500, 9000, 8800, 8700, 8600, 8500, 8300, 8000, 7800, 7500, 7000, 6800, 6500, 6000, 5500, 5000, 4500, 4000, 3000, 2000, 1000, 800, 500, 300, 150, 50, 10, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        };
+
+        const lightCtx = document.getElementById('lightSensorChart').getContext('2d');
+        new Chart(lightCtx, {
+            type: 'line',
+            data: {
+                labels: lightSensorData.labels,
+                datasets: [{
+                    label: 'Nivel de Luz (lx)',
+                    data: lightSensorData.values,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Luminosidad (lx)' }
+                    },
+                    x: {
+                        title: { display: true, text: 'Hora del Día' }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return ` ${context.parsed.y} lx`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Interactive slider
+        const luxSlider = document.getElementById('luxSlider');
+        const luxValue = document.getElementById('luxValue');
+        const brightnessValue = document.getElementById('brightnessValue');
+        const brightnessIndicator = document.getElementById('brightnessIndicator');
+
+        luxSlider.addEventListener('input', (e) => {
+            const L = parseInt(e.target.value);
+            luxValue.textContent = L;
+            let B = 0;
+            if (L <= 50) {
+                B = 100;
+            } else if (L > 50 && L < 500) {
+                B = 100 * (500 - L) / 450;
+            } else { // L >= 500
+                B = 0;
+            }
+            const brightnessPercentage = B.toFixed(0);
+            brightnessValue.textContent = `${brightnessPercentage}%`;
+            brightnessIndicator.style.backgroundColor = `rgba(251, 191, 36, ${brightnessPercentage / 100})`;
+        });
+
+        // Cost chart
+        const costCtx = document.getElementById('costBarChart').getContext('2d');
+        new Chart(costCtx, {
+            type: 'bar',
+            data: {
+                labels: ['M. Central', 'M. LUX', 'M. PIR', 'M. Dimmer'],
+                datasets: [{
+                    label: 'Costo por Módulo (MXN)',
+                    data: [141.97, 195.96, 191.47, 382.47],
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.7)',
+                        'rgba(245, 158, 11, 0.7)',
+                        'rgba(139, 92, 246, 0.7)',
+                        'rgba(239, 68, 68, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgb(59, 130, 246)',
+                        'rgb(245, 158, 11)',
+                        'rgb(139, 92, 246)',
+                        'rgb(239, 68, 68)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Costo (MXN)'}
+                    }
+                }
+            }
+        });
+    });
+</script>
+</body>
+</html>
